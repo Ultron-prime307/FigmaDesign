@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flowstate — Automate the busywork, keep the judgment calls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0c16;
+    --bg-2: #0d1020;
+    --glass: rgba(255,255,255,0.06);
+    --glass-strong: rgba(255,255,255,0.10);
+    --glass-border: rgba(255,255,255,0.14);
+    --text-1: #f3f4fb;
+    --text-2: #a4a9c1;
+    --text-3: #6c7191;
+    --accent-violet: #8b7bff;
+    --accent-cyan: #5ce1ff;
+    --accent-pink: #ff7ab8;
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: var(--font-body);
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important;}
+  }
+
+  a{color:inherit; text-decoration:none;}
+  ul{list-style:none;}
+  img{max-width:100%; display:block;}
+  button{font-family:inherit; cursor:pointer;}
+
+  /* ===== Ambient background ===== */
+  .ambient{
+    position:fixed; inset:0; z-index:-1; overflow:hidden;
+    background: radial-gradient(ellipse at top, var(--bg-2), var(--bg) 60%);
+  }
+  .blob{
+    position:absolute; border-radius:50%;
+    filter: blur(90px); opacity:0.55;
+    animation: drift 22s ease-in-out infinite alternate;
+  }
+  .blob.b1{ width:560px; height:560px; left:-120px; top:-160px; background:var(--accent-violet); }
+  .blob.b2{ width:480px; height:480px; right:-140px; top:120px; background:var(--accent-cyan); animation-delay:-6s; }
+  .blob.b3{ width:520px; height:520px; left:30%; bottom:-220px; background:var(--accent-pink); animation-delay:-12s; }
+  @keyframes drift{
+    from{ transform: translate(0,0) scale(1); }
+    to{ transform: translate(40px,-30px) scale(1.08); }
+  }
+  .noise{
+    position:absolute; inset:0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  }
+
+  /* ===== Glass utility ===== */
+  .glass{
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 24px; }
+  section{ padding:120px 0; position:relative; }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:13px; letter-spacing:0.08em;
+    color: var(--accent-cyan); text-transform:uppercase; margin-bottom:14px;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .eyebrow::before{ content:''; width:6px; height:6px; border-radius:50%; background:var(--accent-cyan); box-shadow:0 0 12px var(--accent-cyan); }
+  h1,h2,h3{ font-family:var(--font-display); font-weight:600; letter-spacing:-0.02em; }
+  .section-head{ max-width:640px; margin-bottom:56px; }
+  .section-head h2{ font-size:clamp(28px,4vw,42px); margin-bottom:14px; }
+  .section-head p{ color:var(--text-2); font-size:17px; line-height:1.6; }
+
+  /* ===== Menu bar (signature element) ===== */
+  .menubar{
+    position:fixed; top:18px; left:50%; transform:translateX(-50%);
+    z-index:100; width:min(920px, calc(100% - 32px));
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 18px; border-radius:999px;
+  }
+  .menubar .traffic{ display:flex; gap:8px; }
+  .traffic span{ width:11px; height:11px; border-radius:50%; display:inline-block; }
+  .traffic .red{ background:#ff5f57; } .traffic .yellow{ background:#febc2e; } .traffic .green{ background:#28c840; }
+  .menubar nav{ display:flex; gap:28px; }
+  .menubar nav a{ font-size:14px; color:var(--text-2); transition:color .2s; }
+  .menubar nav a:hover{ color:var(--text-1); }
+  .menubar .logo{ font-family:var(--font-display); font-weight:700; font-size:15px; letter-spacing:-0.01em; display:flex; align-items:center; gap:8px;}
+  .logo-dot{ width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,var(--accent-violet),var(--accent-cyan)); box-shadow:0 0 10px var(--accent-violet);}
+  .menu-cta{
+    font-size:13px; padding:8px 16px; border-radius:999px;
+    background:var(--glass-strong); border:1px solid var(--glass-border);
+  }
+  @media (max-width:760px){ .menubar nav{ display:none; } }
+
+  /* ===== Hero ===== */
+  .hero{ padding:200px 0 100px; text-align:center; }
+  .hero h1{ font-size:clamp(38px,6.4vw,72px); line-height:1.04; margin-bottom:22px; }
+  .hero h1 .grad{
+    background:linear-gradient(120deg,var(--accent-violet),var(--accent-cyan) 60%,var(--accent-pink));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p.lead{ font-size:18px; color:var(--text-2); max-width:560px; margin:0 auto 36px; line-height:1.65; }
+  .hero-ctas{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:80px; }
+  .btn{
+    padding:14px 26px; border-radius:14px; font-size:15px; font-weight:500; border:1px solid transparent;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .btn:hover{ transform:translateY(-2px); }
+  .btn-primary{
+    background:linear-gradient(135deg,var(--accent-violet),var(--accent-cyan));
+    color:#0a0c16; font-weight:600;
+    box-shadow:0 8px 30px rgba(139,123,255,0.35);
+  }
+  .btn-ghost{ background:var(--glass); border-color:var(--glass-border); color:var(--text-1); }
+
+  /* macOS window mockup */
+  .window{
+    max-width:920px; margin:0 auto; border-radius:20px; overflow:hidden;
+    text-align:left;
+  }
+  .window-bar{
+    display:flex; align-items:center; gap:10px; padding:14px 18px;
+    background:rgba(255,255,255,0.04); border-bottom:1px solid var(--glass-border);
+  }
+  .window-bar .title{ flex:1; text-align:center; font-size:13px; color:var(--text-3); font-family:var(--font-mono); }
+  .window-body{ padding:36px; display:grid; grid-template-columns:200px 1fr; gap:28px; }
+  .window-nav{ display:flex; flex-direction:column; gap:6px; }
+  .window-nav .item{ padding:9px 12px; border-radius:9px; font-size:13px; color:var(--text-2); }
+  .window-nav .item.active{ background:var(--glass-strong); color:var(--text-1); }
+  .window-cards{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .mini-card{ background:var(--glass-strong); border:1px solid var(--glass-border); border-radius:14px; padding:16px; }
+  .mini-card .stat{ font-family:var(--font-mono); font-size:22px; font-weight:500; }
+  .mini-card .label{ font-size:12px; color:var(--text-3); margin-top:4px; }
+  @media (max-width:680px){ .window-body{ grid-template-columns:1fr; } .window-nav{ display:none; } }
+
+  /* ===== Logos strip ===== */
+  .logos{ display:flex; gap:48px; justify-content:center; flex-wrap:wrap; opacity:0.5; font-family:var(--font-mono); font-size:13px; letter-spacing:0.05em; padding:50px 0; color:var(--text-3); }
+
+  /* ===== Features ===== */
+  .feature-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .feature-card{ padding:30px; transition:transform .25s ease, background .25s ease; }
+  .feature-card:hover{ transform:translateY(-4px); background:var(--glass-strong); }
+  .feature-icon{
+    width:44px; height:44px; border-radius:12px; margin-bottom:20px;
+    background:linear-gradient(135deg,var(--accent-violet),var(--accent-cyan));
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+  }
+  .feature-card h3{ font-size:18px; margin-bottom:10px; }
+  .feature-card p{ font-size:14px; color:var(--text-2); line-height:1.6; }
+  @media (max-width:900px){ .feature-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:600px){ .feature-grid{ grid-template-columns:1fr; } }
+
+  /* ===== Pricing ===== */
+  .pricing-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; align-items:stretch; }
+  .price-card{ padding:32px; display:flex; flex-direction:column; }
+  .price-card.featured{ border:1px solid rgba(139,123,255,0.5); box-shadow:0 0 0 1px rgba(139,123,255,0.15), 0 20px 60px rgba(139,123,255,0.18); position:relative; }
+  .price-card .badge{ position:absolute; top:-12px; right:24px; background:linear-gradient(135deg,var(--accent-violet),var(--accent-cyan)); color:#0a0c16; font-size:11px; font-weight:700; padding:5px 12px; border-radius:999px; letter-spacing:0.04em; }
+  .price-card .tier{ font-family:var(--font-mono); font-size:13px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px; }
+  .price-card .amount{ font-family:var(--font-display); font-size:40px; font-weight:600; margin-bottom:4px; }
+  .price-card .amount span{ font-size:15px; color:var(--text-3); font-family:var(--font-body); font-weight:400; }
+  .price-card .desc{ font-size:14px; color:var(--text-2); margin-bottom:24px; }
+  .price-card ul{ display:flex; flex-direction:column; gap:11px; margin-bottom:28px; flex:1; }
+  .price-card li{ font-size:14px; color:var(--text-2); display:flex; gap:9px; align-items:flex-start; }
+  .price-card li::before{ content:'✓'; color:var(--accent-cyan); font-weight:700; }
+  @media (max-width:900px){ .pricing-grid{ grid-template-columns:1fr; } }
+
+  /* ===== Testimonials ===== */
+  .testi-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .testi-card{ padding:28px; }
+  .testi-card p{ font-size:15px; color:var(--text-1); line-height:1.65; margin-bottom:20px; }
+  .testi-person{ display:flex; align-items:center; gap:12px; }
+  .avatar{ width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--accent-pink),var(--accent-violet)); }
+  .testi-person .name{ font-size:14px; font-weight:600; }
+  .testi-person .role{ font-size:12px; color:var(--text-3); }
+  @media (max-width:900px){ .testi-grid{ grid-template-columns:1fr; } }
+
+  /* ===== FAQ ===== */
+  .faq-list{ display:flex; flex-direction:column; gap:12px; }
+  .faq-item{ padding:6px 26px; }
+  .faq-item summary{ list-style:none; padding:18px 0; display:flex; justify-content:space-between; align-items:center; font-size:15px; font-weight:500; cursor:pointer; }
+  .faq-item summary::-webkit-details-marker{ display:none; }
+  .faq-item summary::after{ content:'+'; font-size:20px; color:var(--text-3); transition:transform .2s; }
+  .faq-item[open] summary::after{ transform:rotate(45deg); }
+  .faq-item p{ padding-bottom:20px; font-size:14px; color:var(--text-2); line-height:1.65; }
+
+  /* ===== Final CTA ===== */
+  .cta-band{ padding:70px 56px; text-align:center; }
+  .cta-band h2{ font-size:clamp(26px,4vw,38px); margin-bottom:14px; }
+  .cta-band p{ color:var(--text-2); margin-bottom:30px; }
+
+  /* ===== Footer ===== */
+  footer{ padding:70px 0 40px; }
+  .footer-grid{ display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; margin-bottom:50px; }
+  .footer-grid h4{ font-size:13px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:16px; font-family:var(--font-mono); font-weight:500; }
+  .footer-grid li{ margin-bottom:10px; }
+  .footer-grid a{ font-size:14px; color:var(--text-2); transition:color .2s; }
+  .footer-grid a:hover{ color:var(--text-1); }
+  .footer-bottom{ display:flex; justify-content:space-between; align-items:center; padding-top:28px; border-top:1px solid var(--glass-border); font-size:13px; color:var(--text-3); flex-wrap:wrap; gap:12px; }
+  @media (max-width:760px){ .footer-grid{ grid-template-columns:1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="ambient">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="noise"></div>
+</div>
+
+<header class="menubar glass">
+  <div class="traffic"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+  <div class="logo"><span class="logo-dot"></span>Flowstate</div>
+  <nav>
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#testimonials">Stories</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+  <a href="#pricing" class="menu-cta">Get started</a>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <span class="eyebrow">Now in open beta</span>
+    <h1>Automate the busywork.<br><span class="grad">Keep the judgment calls.</span></h1>
+    <p class="lead">Flowstate watches your team's repetitive steps and turns them into reliable workflows — so the decisions that need a human stay with a human.</p>
+    <div class="hero-ctas">
+      <button class="btn btn-primary">Start free trial</button>
+      <button class="btn btn-ghost">Watch a 2-min demo</button>
+    </div>
+
+    <div class="window glass">
+      <div class="window-bar">
+        <div class="traffic"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+        <div class="title">flowstate.app — Workspace</div>
+      </div>
+      <div class="window-body">
+        <div class="window-nav">
+          <div class="item active">Overview</div>
+          <div class="item">Workflows</div>
+          <div class="item">Approvals</div>
+          <div class="item">Integrations</div>
+          <div class="item">Reports</div>
+        </div>
+        <div class="window-cards">
+          <div class="mini-card"><div class="stat">1,204</div><div class="label">Tasks automated this week</div></div>
+          <div class="mini-card"><div class="stat">38 hrs</div><div class="label">Saved across the team</div></div>
+          <div class="mini-card"><div class="stat">99.2%</div><div class="label">Workflow success rate</div></div>
+          <div class="mini-card"><div class="stat">6</div><div class="label">Active integrations</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="logos">
+      <span>NORTHWIND</span><span>VELOCITA</span><span>HARBOR&nbsp;CO.</span><span>PILLAR&nbsp;LABS</span><span>GREENFIELD</span>
+    </div>
+  </div>
+
+  <section id="features" class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Features</span>
+      <h2>Built for the steps no one wants to repeat</h2>
+      <p>Flowstate sits between your tools and your team, catching the repetitive parts of a workflow and routing the rest to the right person.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card glass">
+        <div class="feature-icon">⌘</div>
+        <h3>Visual workflow builder</h3>
+        <p>Drag steps onto a canvas, connect them to your tools, and watch the run history in real time — no scripting required.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">⟡</div>
+        <h3>Smart approvals</h3>
+        <p>Route exceptions to a person automatically when a workflow hits a decision it shouldn't make alone.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">⌁</div>
+        <h3>60+ integrations</h3>
+        <p>Connect the tools you already use — from spreadsheets to CRMs to internal APIs — in a few clicks.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">◫</div>
+        <h3>Audit trail, always on</h3>
+        <p>Every automated action is logged with who triggered it, what changed, and why — ready for review anytime.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">⇲</div>
+        <h3>Team workspaces</h3>
+        <p>Give each team its own workflows, permissions, and shared library, without stepping on each other's setup.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">◈</div>
+        <h3>Live reporting</h3>
+        <p>See time saved, success rates, and bottlenecks per workflow, updated as runs complete.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing" class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Pricing</span>
+      <h2>Plans that scale with your workflows</h2>
+      <p>Start free, upgrade when your team needs more workflows, more approvals, or more history.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card glass">
+        <div class="tier">Starter</div>
+        <div class="amount">$0<span>/month</span></div>
+        <div class="desc">For small teams trying out their first workflows.</div>
+        <ul>
+          <li>Up to 3 active workflows</li>
+          <li>2 team members</li>
+          <li>7-day run history</li>
+          <li>Community support</li>
+        </ul>
+        <button class="btn btn-ghost">Start for free</button>
+      </div>
+      <div class="price-card glass featured">
+        <span class="badge">Most popular</span>
+        <div class="tier">Team</div>
+        <div class="amount">$39<span>/month</span></div>
+        <div class="desc">For growing teams automating across departments.</div>
+        <ul>
+          <li>Unlimited workflows</li>
+          <li>Up to 25 team members</li>
+          <li>90-day run history</li>
+          <li>Smart approvals</li>
+          <li>Priority support</li>
+        </ul>
+        <button class="btn btn-primary">Start free trial</button>
+      </div>
+      <div class="price-card glass">
+        <div class="tier">Enterprise</div>
+        <div class="amount">Custom</div>
+        <div class="desc">For organizations with custom security and scale needs.</div>
+        <ul>
+          <li>Unlimited everything</li>
+          <li>SSO & audit exports</li>
+          <li>Dedicated success manager</li>
+          <li>Custom integrations</li>
+        </ul>
+        <button class="btn btn-ghost">Talk to sales</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="testimonials" class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Customer stories</span>
+      <h2>Teams that got their time back</h2>
+      <p>A few of the teams using Flowstate to clear their queues.</p>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card glass">
+        <p>"We cut our onboarding checklist from two days of manual steps to about twenty minutes of review."</p>
+        <div class="testi-person"><div class="avatar"></div><div><div class="name">Priya Shah</div><div class="role">Ops Lead, Northwind</div></div></div>
+      </div>
+      <div class="testi-card glass">
+        <p>"The approval routing is what sold us — automation that knows when to stop and ask a person."</p>
+        <div class="testi-person"><div class="avatar"></div><div><div class="name">Marcus Webb</div><div class="role">COO, Harbor Co.</div></div></div>
+      </div>
+      <div class="testi-card glass">
+        <p>"Setup took an afternoon. Three months later we've automated workflows across four teams."</p>
+        <div class="testi-person"><div class="avatar"></div><div><div class="name">Lena Ortiz</div><div class="role">IT Director, Pillar Labs</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">FAQ</span>
+      <h2>Questions, answered</h2>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item glass" open>
+        <summary>Do I need to know how to code?</summary>
+        <p>No. Workflows are built visually by connecting steps on a canvas. Advanced users can drop into custom scripts for edge cases, but it's optional.</p>
+      </details>
+      <details class="faq-item glass">
+        <summary>What happens when a workflow hits something it can't decide?</summary>
+        <p>It pauses and routes the decision to the person you've assigned, with full context attached, so nothing gets automated blindly.</p>
+      </details>
+      <details class="faq-item glass">
+        <summary>Can I cancel anytime?</summary>
+        <p>Yes. Plans are month-to-month with no contracts, and you can downgrade to Starter at any time without losing your workflows.</p>
+      </details>
+      <details class="faq-item glass">
+        <summary>Is my data secure?</summary>
+        <p>All data is encrypted in transit and at rest. Enterprise plans add SSO, audit exports, and custom data retention policies.</p>
+      </details>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="cta-band glass">
+      <h2>Give your team back its afternoons</h2>
+      <p>Set up your first workflow in under ten minutes — no credit card required.</p>
+      <button class="btn btn-primary">Start free trial</button>
+    </div>
+  </div>
+</main>
+
+<footer class="wrap">
+  <div class="footer-grid">
+    <div>
+      <div class="logo"><span class="logo-dot"></span>Flowstate</div>
+      <p style="color:var(--text-3); font-size:13px; margin-top:14px; max-width:240px; line-height:1.6;">Workflow automation that knows when to ask a human.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#">Integrations</a></li><li><a href="#">Changelog</a></li></ul>
+    </div>
+    <div>
+      <h4>Company</h4>
+      <ul><li><a href="#">About</a></li><li><a href="#">Careers</a></li><li><a href="#">Blog</a></li><li><a href="#">Contact</a></li></ul>
+    </div>
+    <div>
+      <h4>Legal</h4>
+      <ul><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">Security</a></li></ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Flowstate, Inc.</span>
+    <span>Made with liquid glass UI</span>
+  </div>
+</footer>
+
+</body>
+</html>
