@@ -7,54 +7,62 @@ export default function Home() {
       <Navbar />
 
       {/* Hero */}
-      <section className="hero pt-48 pb-24 px-4 text-center relative z-10">
-        <div className="wrap">
+      <section className="hero pt-32 pb-20 sm:pt-40 sm:pb-24 px-4 text-center relative z-10">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <span className="absolute left-1/2 top-10 -translate-x-1/2 h-80 w-80 rounded-full bg-[rgba(143,116,255,0.18)] blur-3xl animate-pulse-slow" />
+          <span className="absolute right-6 top-24 h-52 w-52 rounded-full bg-[rgba(77,215,255,0.16)] blur-3xl animate-pulse-slow" />
+          <span className="absolute left-6 bottom-16 h-24 w-24 rounded-full border border-cyan-400/30 shadow-[0_0_80px_rgba(77,215,255,0.2)]" />
+          <span className="absolute right-1/3 bottom-32 h-48 w-48 rounded-full border border-violet-400/20 shadow-[0_0_120px_rgba(143,116,255,0.25)]" />
+        </div>
+
+        <div className="wrap relative z-10">
           <div className="eyebrow">
             <span>✨ Introducing Flowstate</span>
           </div>
-          <h1 className="mb-6 bg-gradient-to-r from-white via-white to-white/70 bg-clip-text text-transparent">
+          <h1 className="mb-6 max-w-4xl mx-auto text-4xl sm:text-5xl md:text-6xl leading-tight bg-gradient-to-r from-cyan-100 via-white to-violet-100 bg-clip-text text-transparent">
             Automate the busywork,<br />keep the judgment calls
           </h1>
-          <p className="lead max-w-2xl mx-auto mb-12 text-lg text-[var(--text-2)]">
+          <p className="lead max-w-2xl mx-auto mb-12 text-base sm:text-lg text-[var(--text-2)]">
             Flowstate handles the repetitive tasks while you focus on decisions that matter. No more manual busywork—just smart automation and meaningful control.
           </p>
 
-          <div className="flex gap-4 justify-center flex-wrap mb-20">
-            <Link href="/auth/register" className="btn btn-primary">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-20">
+            <Link href="/auth/register" className="btn btn-primary w-full sm:w-auto">
               Start free trial
             </Link>
-            <Link href="#features" className="btn btn-ghost">
+            <Link href="#features" className="btn btn-ghost w-full sm:w-auto">
               Learn more
             </Link>
           </div>
 
-          {/* App mockup window */}
-          <div className="glass rounded-2xl overflow-hidden max-w-2xl mx-auto">
-            <div className="bg-[var(--glass-strong)] border-b border-[var(--glass-border)] px-4 py-3 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500" />
-              <div className="w-3 h-3 rounded-full bg-green-500" />
-              <span className="flex-1 text-center text-xs text-[var(--text-3)] font-mono">
+          <div className="glass rounded-[2rem] overflow-hidden max-w-3xl mx-auto">
+            <div className="bg-[var(--glass-strong)] border-b border-[var(--glass-border)] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+              </div>
+              <span className="text-xs text-[var(--text-3)] font-mono">
                 flowstate-dashboard.app
               </span>
             </div>
-            <div className="p-8 bg-gradient-to-br from-[var(--bg-2)] to-[var(--bg)]">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="glass-strong rounded-lg p-4">
-                  <div className="text-2xl font-mono font-bold">1,234</div>
-                  <div className="text-xs text-[var(--text-3)] mt-2">Tasks Automated</div>
+            <div className="p-6 sm:p-8 bg-gradient-to-br from-[var(--bg-2)] to-[var(--bg)]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="glass-strong rounded-3xl p-5">
+                  <div className="text-3xl font-mono font-bold">1,234</div>
+                  <div className="text-xs text-[var(--text-3)] mt-3">Tasks Automated</div>
                 </div>
-                <div className="glass-strong rounded-lg p-4">
-                  <div className="text-2xl font-mono font-bold">15h</div>
-                  <div className="text-xs text-[var(--text-3)] mt-2">Time Saved</div>
+                <div className="glass-strong rounded-3xl p-5">
+                  <div className="text-3xl font-mono font-bold">15h</div>
+                  <div className="text-xs text-[var(--text-3)] mt-3">Time Saved</div>
                 </div>
-                <div className="glass-strong rounded-lg p-4">
-                  <div className="text-2xl font-mono font-bold">98%</div>
-                  <div className="text-xs text-[var(--text-3)] mt-2">Accuracy</div>
+                <div className="glass-strong rounded-3xl p-5">
+                  <div className="text-3xl font-mono font-bold">98%</div>
+                  <div className="text-xs text-[var(--text-3)] mt-3">Accuracy</div>
                 </div>
-                <div className="glass-strong rounded-lg p-4">
-                  <div className="text-2xl font-mono font-bold">24/7</div>
-                  <div className="text-xs text-[var(--text-3)] mt-2">Uptime</div>
+                <div className="glass-strong rounded-3xl p-5">
+                  <div className="text-3xl font-mono font-bold">24/7</div>
+                  <div className="text-xs text-[var(--text-3)] mt-3">Uptime</div>
                 </div>
               </div>
             </div>
@@ -73,7 +81,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
             {[
               {
                 title: "No-Code Automation",
@@ -127,7 +135,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {[
               {
                 tier: "Starter",
