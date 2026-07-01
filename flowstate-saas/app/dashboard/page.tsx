@@ -108,12 +108,12 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[var(--bg)]">
       {/* Header */}
       <header className="border-b border-[var(--glass-border)] backdrop-blur supports-[backdrop-filter]:bg-[var(--glass)]">
-        <div className="wrap py-6 flex justify-between items-center">
+        <div className="wrap py-6 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold">Dashboard</h1>
             <p className="text-[var(--text-3)] text-sm">Welcome, {session?.user?.name || session?.user?.email}</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3 justify-start md:justify-end">
             <Link href="/" className="btn btn-ghost text-sm">
               Home
             </Link>
@@ -129,7 +129,7 @@ export default function Dashboard() {
 
       <main className="wrap py-12">
         <div className="mb-8">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
             <h2 className="text-xl font-bold">Your Automations</h2>
             <button
               onClick={() => setShowNewForm(!showNewForm)}
